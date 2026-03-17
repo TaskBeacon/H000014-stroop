@@ -1,0 +1,200 @@
+# Base config (human run)
+# - Used by: python main.py
+# - Scope: human experiment only (no qa/sim section in this file)
+subinfo_fields:
+- name: subject_id
+  type: int
+  constraints:
+    min: 101
+    max: 999
+    digits: 3
+- name: subname
+  type: string
+- name: age
+  type: int
+  constraints:
+    min: 5
+    max: 60
+- name: gender
+  type: choice
+  choices:
+  - Male
+  - Female
+subinfo_mapping:
+  subject_id: 被试号
+  subname: 被试姓名(拼音)
+  age: 年龄
+  gender: 性别
+  Male: 男
+  Female: 女
+  registration_failed: 注册失败。
+  registration_successful: 注册成功！
+  invalid_input: 字段 {field} 输入无效
+window:
+  size:
+  - 1920
+  - 1080
+  units: deg
+  screen: 0
+  bg_color: gray
+  fullscreen: true
+  fullscreen_lock_escape: true
+  monitor_width_cm: 60
+  monitor_distance_cm: 72
+task:
+  task_name: stroop_preview
+  language: Chinese
+  voice_name: zh-CN-YunyangNeural
+  total_blocks: 1
+  total_trials: 40
+  trial_per_block: 40
+  conditions:
+  - congruent_red
+  - congruent_green
+  - incongruent_red
+  - incongruent_green
+  key_list:
+  - f
+  - j
+  red_key: f
+  green_key: j
+  seed_mode: same_across_sub
+  voice_enabled: true
+  delta: 0.0
+  overall_seed: 2025
+  input_mode: keyboard
+  hide_cursor: true
+  force_quit_enabled: true
+  force_quit_shortcut: ctrl+q
+stimuli:
+  fixation:
+    type: text
+    text: +
+    color: white
+    height: 1.5
+  congruent_red:
+    type: text
+    text: 红
+    color: red
+    font: SimHei
+    height: 1.5
+  congruent_green:
+    type: text
+    text: 绿
+    color: green
+    font: SimHei
+    height: 1.5
+  incongruent_red:
+    type: text
+    text: 绿
+    color: red
+    font: SimHei
+    height: 1.5
+  incongruent_green:
+    type: text
+    text: 红
+    color: green
+    font: SimHei
+    height: 1.5
+  correct_feedback:
+    type: text
+    text: 正确
+    color: white
+    font: SimHei
+    height: 1.5
+  incorrect_feedback:
+    type: text
+    text: 错误
+    color: white
+    font: SimHei
+    height: 1.5
+  no_response_feedback:
+    type: text
+    text: 未反应
+    color: white
+    font: SimHei
+    height: 1.5
+  block_break:
+    type: text
+    text: '第 {block_num} / {total_blocks} 部分完成
+
+      正确率：{accuracy:.2%}
+
+
+      请在充分休息后按【空格键】继续
+
+      '
+    color: white
+    height: 1.5
+  instruction_text:
+    type: textbox
+    text: '【Stroop任务】
+
+
+      任务开始后，屏幕中央会显示一个“+”号，请注视它。
+
+      随后，会出现一个有颜色的词语（例如 “红” 或 “绿”）。
+
+      请您尽快判断词语的颜色。
+
+
+      如果词语是红色，请按【f】键。
+
+      如果词语是绿色，请按【j】键。
+
+
+      请只关注词语的颜色，忽略词语本身的含义。
+
+
+      准备好后，请按【空格键】开始。
+
+      '
+    color: white
+    font: SimHei
+    alignment: center
+    letterHeight: 0.78
+    units: deg
+    size:
+    - 20
+    - 5
+  good_bye:
+    type: text
+    text: 实验结束，感谢您的参与！
+    color: white
+    height: 1.5
+timing:
+  iti_duration:
+  - 0.8
+  - 1.2
+  fixation_duration: 0.5
+  stim_duration: 2
+  feedback_duration: 0.5
+triggers:
+  map:
+    exp_onset: 98
+    exp_end: 99
+    block_onset: 100
+    block_end: 101
+    fixation_onset: 1
+    congruent_stim_onset: 10
+    incongruent_stim_onset: 20
+    red_key_press: 30
+    green_key_press: 31
+    feedback_correct_response: 51
+    feedback_incorrect_response: 52
+    feedback_no_response: 53
+    feedback_onset: 60
+  driver:
+    type: serial_url
+    url: loop://
+    baudrate: 115200
+    timeout: 1
+    prefix:
+    - 1
+    - 225
+    - 1
+    - 0
+  policy:
+    strict: false
+  timing:
+    post_delay_s: 0.001
