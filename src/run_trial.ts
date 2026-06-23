@@ -20,6 +20,18 @@ function resolveFeedbackLabel(
   return "no_response_feedback";
 }
 
+function resolveFeedbackTrigger(snapshot: TrialSnapshot, triggers: Record<string, unknown>): number | null {
+  const label = resolveFeedbackLabel(snapshot);
+  const triggerName =
+    label === "correct_feedback"
+      ? "feedback_correct_response"
+      : label === "incorrect_feedback"
+        ? "feedback_incorrect_response"
+        : "feedback_no_response";
+  const value = Number(triggers[triggerName]);
+  return Number.isFinite(value) ? value : null;
+}
+
 export function run_trial(
   trial: TrialBuilder,
   condition: string,
@@ -38,6 +50,10 @@ export function run_trial(
   const key_list = ((settings.key_list as string[]) ?? [red_key, green_key]).map(String);
   const correct_response = color === "red" ? red_key : green_key;
   const trigger_map = (settings.triggers ?? {}) as Record<string, unknown>;
+  const trigger = (name: string): number | null => {
+    const value = Number(trigger_map[name]);
+    return Number.isFinite(value) ? value : null;
+  };
 
   const fixationUnit = trial.unit("fixation").addStim(stimBank.get("fixation"));
   set_trial_context(fixationUnit, {
@@ -56,7 +72,12 @@ export function run_trial(
     },
     stim_id: "fixation"
   });
-  fixationUnit.show({ duration: Number(settings.fixation_duration ?? 0.5) }).to_dict();
+  fixationUnit
+    .show({
+      duration: Number(settings.fixation_duration ?? 0.5),
+      onset_trigger: trigger("fixation_onset")
+    })
+    .to_dict();
 
   const stimulusUnit = trial.unit("stimulus").addStim(stimBank.get(condition_id));
   set_trial_context(stimulusUnit, {
@@ -81,6 +102,7 @@ export function run_trial(
       keys: key_list,
       correct_keys: [correct_response],
       duration: Number(settings.stim_duration ?? 2),
+      onset_trigger: trigger(`${stroop_type}_stim_onset`),
       response_trigger: {
         [red_key]: Number(trigger_map.red_key_press ?? 30),
         [green_key]: Number(trigger_map.green_key_press ?? 31)
@@ -94,32 +116,45 @@ export function run_trial(
     .addStim((snapshot: TrialSnapshot) => stimBank.get(resolveFeedbackLabel(snapshot)));
   set_trial_context(feedbackUnit, {
     trial_id: trial.trial_id,
-    phase: "outcome_feedback",
+    phase: "feedback",
     deadline_s: Number(settings.feedback_duration ?? 0.5),
-    valid_keys: [...key_list],
+    valid_keys: [],
     block_id,
     condition_id,
     task_factors: {
       condition: condition_id,
-      stage: "outcome_feedback",
+      stage: "feedback",
+      stroop_type,
+      color,
+      hit: (snapshot: TrialSnapshot) => Boolean(snapshot.units.stimulus?.hit),
+      response_made: (snapshot: TrialSnapshot) => Boolean(snapshot.units.stimulus?.response),
       block_idx
-    }
+    },
+    stim_id: (snapshot: TrialSnapshot) => resolveFeedbackLabel(snapshot)
   });
-  feedbackUnit.show({ duration: Number(settings.feedback_duration ?? 0.5) }).to_dict();
+  feedbackUnit
+    .show({
+      duration: Number(settings.feedback_duration ?? 0.5),
+      onset_trigger: (snapshot: TrialSnapshot) => resolveFeedbackTrigger(snapshot, trigger_map)
+    })
+    .to_dict();
 
   const itiUnit = trial.unit("iti");
   set_trial_context(itiUnit, {
     trial_id: trial.trial_id,
-    phase: "inter_trial_interval",
+    phase: "iti",
     deadline_s: (settings.iti_duration as number | number[] | null | undefined) ?? null,
-    valid_keys: [...key_list],
+    valid_keys: [],
     block_id,
     condition_id,
     task_factors: {
       condition: condition_id,
-      stage: "inter_trial_interval",
+      stage: "iti",
+      stroop_type,
+      color,
       block_idx
-    }
+    },
+    stim_id: "blank_iti"
   });
   itiUnit.show({ duration: (settings.iti_duration as number | number[] | null | undefined) ?? null }).to_dict();
 
